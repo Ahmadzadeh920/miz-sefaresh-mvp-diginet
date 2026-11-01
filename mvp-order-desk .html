@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>میز سفارش — MVP</title>
+  <style>
+    :root {
+      --primary: #1a365d;
+      --accent: #2b6cb0;
+      --bg: #f7fafc;
+      --card: #ffffff;
+      --border: #e2e8f0;
+      --success: #38a169;
+      --warn: #d69e2e;
+      --danger: #e53e3e;
+      --muted: #718096;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Tahoma", "Segoe UI", "Vazirmatn", sans-serif;
+      background: var(--bg);
+      color: #1a202c;
+      line-height: 1.6;
+      padding: 12px;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+    header {
+      background: var(--primary);
+      color: white;
+      padding: 16px 20px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+    }
+    header h1 { font-size: 1.35rem; margin-bottom: 4px; }
+    header p { font-size: 0.85rem; opacity: 0.9; }
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .tab {
+      background: darkblue;
+      border: 1px solid var(--border);
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    .tab.active {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+    .panel { display: none; }
+    .panel.active { display: block; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .card h2 {
+      font-size: 1.05rem;
+      color: var(--primary);
+      margin-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+    label {
+      display: block;
+      font-size: 0.85rem;
+      margin-bottom: 4px;
+      color: var(--muted);
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.95rem;
+      margin-bottom: 12px;
+      font-family: inherit;
+    }
+    textarea { min-height: 70px; resize: vertical; }
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 600px) {
+      .row { grid-template-columns: 1fr; }
+    }
+    button, .btn {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    button.secondary {
+      background: white;
+      color: var(--primary);
+      border: 1px solid var(--border);
+    }
+    button.danger { background: var(--danger); }
+    button:hover { opacity: 0.92; }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    th, td {
+      text-align: right;
+      padding: 8px 6px;
+      border-bottom: 1px solid var(--border);
+    }
+    th { background: #edf2f7; color: var(--primary); font-weight: 600; }
+    .status {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .st-pending { background: #fefcbf; color: #975a16; }
+    .st-paid { background: #bee3f8; color: #2a4365; }
+    .st-prep { background: #e9d8fd; color: #553c9a; }
+    .st-shipped { background: #c6f6d5; color: #276749; }
+    .st-done { background: #e2e8f0; color: #4a5568; }
+    .st-cancel { background: #fed7d7; color: #9b2c2c; }
+    .search {
+      margin-bottom: 12px;
+    }
+    .muted { color: var(--muted); font-size: 0.8rem; }
+    .badge {
+      background: #ebf8ff;
+      color: var(--accent);
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+    }
+    .empty {
+      text-align: center;
+      padding: 24px;
+      color: var(--muted);
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .stat {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      text-align: center;
+    }
+    .stat .num { font-size: 1.4rem; font-weight: 700; color: var(--primary); }
+    .stat .lbl { font-size: 0.75rem; color: var(--muted); }
+    .customer-card {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 10px;
+      background: #fafafa;
+    }
+    .customer-card strong { color: var(--primary); }
+    footer {
+      text-align: center;
+      margin-top: 24px;
+      padding: 12px;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--primary);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      display: none;
+      z-index: 100;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>میز سفارش</h1>
+    <p>MVP سبک برای ثبت و پیگیری سفارش فروشندگان خانگی اینستاگرام — داده‌ها فقط روی همین دستگاه ذخیره می‌شوند</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="new">ثبت سفارش جدید</button>
+    <button class="tab" data-tab="orders">لیست سفارش‌ها</button>
+    <button class="tab" data-tab="customers">مشتریان</button>
+    <button class="tab" data-tab="guide">راهنما</button>
+  </div>
+
+  <!-- NEW ORDER -->
+  <div id="panel-new" class="panel active">
+    <div class="card">
+      <h2>فرم سفارش (مشتری یا خود فروشنده پر می‌کند)</h2>
+      <form id="orderForm">
+        <div class="row">
+          <div>
+            <label>نام مشتری *</label>
+            <input type="text" id="customerName" required placeholder="مثلاً سارا احمدی" />
+          </div>
+          <div>
+            <label>آیدی اینستاگرام</label>
+            <input type="text" id="instagramId" placeholder="@sara_ahmadi" />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>شماره تماس</label>
+            <input type="tel" id="phone" placeholder="09xxxxxxxxx" />
+          </div>
+          <div>
+            <label>محصول / مدل *</label>
+            <input type="text" id="product" required placeholder="شمع بزرگ یاس / سایز ۴۰×۵۰ / ..." />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>تعداد</label>
+            <input type="number" id="qty" min="1" value="1" />
+          </div>
+          <div>
+            <label>مبلغ (تومان)</label>
+            <input type="text" id="amount" placeholder="مثلاً 420000" />
+          </div>
+        </div>
+        <label>آدرس کامل</label>
+        <textarea id="address" placeholder="استان، شهر، خیابان، پلاک، واحد، کدپستی"></textarea>
+        <label>توضیحات / جزئیات سفارشی</label>
+        <textarea id="notes" placeholder="رنگ، سایز، متن روی کیک، رایحه، تاریخ تحویل و ..."></textarea>
+        <div class="actions">
+          <button type="submit">ثبت سفارش</button>
+          <button type="button" class="secondary" id="btnClear">پاک کردن فرم</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ORDERS LIST -->
+  <div id="panel-orders" class="panel">
+    <div class="stats" id="orderStats"></div>
+    <div class="card">
+      <h2>همه سفارش‌ها</h2>
+      <div class="search">
+        <input type="text" id="orderSearch" placeholder="جست‌وجو بر اساس نام، آیدی، محصول یا وضعیت..." />
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>تاریخ</th>
+              <th>مشتری</th>
+              <th>محصول</th>
+              <th>مبلغ</th>
+              <th>وضعیت</th>
+              <th>عملیات</th>
+            </tr>
+          </thead>
+          <tbody id="ordersBody"></tbody>
+        </table>
+      </div>
+      <p class="empty" id="ordersEmpty" style="display:none">هنوز سفارشی ثبت نشده.</p>
+    </div>
+  </div>
+
+  <!-- CUSTOMERS -->
+  <div id="panel-customers" class="panel">
+    <div class="card">
+      <h2>کارت مشتریان (حافظهٔ تکراری‌ها)</h2>
+      <input type="text" id="customerSearch" class="search" placeholder="جست‌وجوی نام یا آیدی..." />
+      <div id="customersList"></div>
+      <p class="empty" id="customersEmpty" style="display:none">هنوز مشتری‌ای ثبت نشده.</p>
+    </div>
+  </div>
+
+  <!-- GUIDE -->
+  <div id="panel-guide" class="panel">
+    <div class="card">
+      <h2>چطور از این MVP استفاده کنید؟</h2>
+      <p style="margin-bottom:10px">این نسخهٔ یک‌هفته‌ای برای تست ایدهٔ «میز سفارش» است. داده‌ها فقط در مرورگر همین دستگاه ذخیره می‌شوند (localStorage).</p>
+      <ol style="padding-right:20px; margin-bottom:12px; font-size:0.9rem">
+        <li style="margin-bottom:6px">لینک این صفحه را در بیو یا استوری بگذارید، یا خودتان هنگام گرفتن سفارش از دایرکت، فرم را پر کنید.</li>
+        <li style="margin-bottom:6px">بعد از ثبت، وضعیت را از لیست سفارش‌ها عوض کنید: منتظر واریز → واریز شد → آماده‌سازی → ارسال شد (کد رهگیری را در یادداشت بنویسید) → تحویل شد.</li>
+        <li style="margin-bottom:6px">وقتی مشتری تکراری پیام داد، به تب «مشتریان» بروید و با نام یا آیدی جست‌وجو کنید تا آخرین خرید و آدرس را ببینید.</li>
+        <li style="margin-bottom:6px">مرحلهٔ بعد (بعد از تست این MVP): عامل AI برای استخراج سابقه از دایرکت‌های قدیمی و پر کردن خودکار کارت مشتریان — در این نسخهٔ یک‌هفته‌ای نیست.</li>
+      </ol>
+      <p class="muted">ساخته‌شده برای چالش ریشه‌یابی — دیجی‌نکست / AI Solo Founder Camp</p>
+      <div class="actions" style="margin-top:12px">
+        <button class="secondary" id="btnExport">خروجی JSON از همه داده‌ها</button>
+        <button class="danger" id="btnReset">پاک کردن همه داده‌ها</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <footer>
+    میز سفارش · MVP سبک · داده‌ها محلی · برای فروشندگان خانگی اینستاگرام
+  </footer>
+
+  <script>
+    const STATUS = {
+      pending: { label: 'منتظر واریز', cls: 'st-pending' },
+      paid: { label: 'واریز شد', cls: 'st-paid' },
+      prep: { label: 'آماده‌سازی', cls: 'st-prep' },
+      shipped: { label: 'ارسال شد', cls: 'st-shipped' },
+      done: { label: 'تحویل شد', cls: 'st-done' },
+      cancel: { label: 'لغو', cls: 'st-cancel' }
+    };
+
+    function load(key, fallback) {
+      try {
+        return JSON.parse(localStorage.getItem(key)) || fallback;
+      } catch { return fallback; }
+    }
+    function save(key, data) {
+      localStorage.setItem(key, JSON.stringify(data));
+    }
+
+    let orders = load('mz_orders', []);
+    let customers = load('mz_customers', {});
+
+    function toast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.style.display = 'block';
+      setTimeout(() => t.style.display = 'none', 2200);
+    }
+
+    function uid() {
+      return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    }
+
+    function today() {
+      const d = new Date();
+      return d.toLocaleDateString('fa-IR') + ' ' + d.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    // Tabs
+    document.querySelectorAll('.tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+        if (btn.dataset.tab === 'orders') renderOrders();
+        if (btn.dataset.tab === 'customers') renderCustomers();
+      });
+    });
+
+    // New order
+    document.getElementById('orderForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const name = document.getElementById('customerName').value.trim();
+      const ig = document.getElementById('instagramId').value.trim().replace(/^@/, '');
+      const phone = document.getElementById('phone').value.trim();
+      const product = document.getElementById('product').value.trim();
+      const qty = document.getElementById('qty').value || '1';
+      const amount = document.getElementById('amount').value.trim();
+      const address = document.getElementById('address').value.trim();
+      const notes = document.getElementById('notes').value.trim();
+
+      const order = {
+        id: uid(),
+        createdAt: new Date().toISOString(),
+        displayDate: today(),
+        name, ig, phone, product, qty, amount, address, notes,
+        status: 'pending'
+      };
+      orders.unshift(order);
+      save('mz_orders', orders);
+
+      // customer card
+      const key = (ig || name).toLowerCase();
+      if (!customers[key]) {
+        customers[key] = { name, ig, phone, address, firstSeen: order.displayDate, orders: [] };
+      }
+      customers[key].name = name || customers[key].name;
+      customers[key].ig = ig || customers[key].ig;
+      customers[key].phone = phone || customers[key].phone;
+      customers[key].address = address || customers[key].address;
+      customers[key].lastProduct = product;
+      customers[key].lastOrder = order.displayDate;
+      customers[key].orders.push(order.id);
+      save('mz_customers', customers);
+
+      document.getElementById('orderForm').reset();
+      document.getElementById('qty').value = 1;
+      toast('سفارش ثبت شد');
+      // switch to list
+      document.querySelector('[data-tab="orders"]').click();
+    });
+
+    document.getElementById('btnClear').addEventListener('click', () => {
+      document.getElementById('orderForm').reset();
+      document.getElementById('qty').value = 1;
+    });
+
+    function renderOrders(filter = '') {
+      const body = document.getElementById('ordersBody');
+      const empty = document.getElementById('ordersEmpty');
+      const q = filter.trim().toLowerCase();
+      const list = orders.filter(o => {
+        if (!q) return true;
+        return [o.name, o.ig, o.product, o.status, STATUS[o.status]?.label, o.amount]
+          .join(' ').toLowerCase().includes(q);
+      });
+
+      // stats
+      const stats = document.getElementById('orderStats');
+      const counts = { pending: 0, paid: 0, prep: 0, shipped: 0, done: 0 };
+      orders.forEach(o => { if (counts[o.status] !== undefined) counts[o.status]++; });
+      stats.innerHTML = `
+        <div class="stat"><div class="num">${orders.length}</div><div class="lbl">کل سفارش‌ها</div></div>
+        <div class="stat"><div class="num">${counts.pending}</div><div class="lbl">منتظر واریز</div></div>
+        <div class="stat"><div class="num">${counts.paid + counts.prep}</div><div class="lbl">در حال انجام</div></div>
+        <div class="stat"><div class="num">${counts.shipped}</div><div class="lbl">ارسال‌شده</div></div>
+      `;
+
+      if (!list.length) {
+        body.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+      }
+      empty.style.display = 'none';
+      body.innerHTML = list.map((o, i) => `
+        <tr>
+          <td>${list.length - i}</td>
+          <td class="muted">${o.displayDate}</td>
+          <td><strong>${escapeHtml(o.name)}</strong>${o.ig ? '<br><span class="muted">@' + escapeHtml(o.ig) + '</span>' : ''}</td>
+          <td>${escapeHtml(o.product)}${o.qty > 1 ? ' ×' + o.qty : ''}</td>
+          <td>${o.amount ? escapeHtml(o.amount) : '—'}</td>
+          <td>
+            <select data-id="${o.id}" class="status-select" style="padding:4px 6px;font-size:0.8rem;border-radius:6px;border:1px solid var(--border)">
+              ${Object.entries(STATUS).map(([k, v]) =>
+                `<option value="${k}" ${o.status === k ? 'selected' : ''}>${v.label}</option>`
+              ).join('')}
+            </select>
+          </td>
+          <td>
+            <button class="secondary" style="padding:4px 8px;font-size:0.75rem" data-view="${o.id}">جزئیات</button>
+          </td>
+        </tr>
+      `).join('');
+
+      body.querySelectorAll('.status-select').forEach(sel => {
+        sel.addEventListener('change', () => {
+          const id = sel.dataset.id;
+          const o = orders.find(x => x.id === id);
+          if (o) {
+            o.status = sel.value;
+            save('mz_orders', orders);
+            toast('وضعیت به‌روز شد');
+            renderOrders(document.getElementById('orderSearch').value);
+          }
+        });
+      });
+
+      body.querySelectorAll('[data-view]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const o = orders.find(x => x.id === btn.dataset.view);
+          if (!o) return;
+          alert(
+            `مشتری: ${o.name}\nآیدی: ${o.ig ? '@' + o.ig : '—'}\nتماس: ${o.phone || '—'}\n` +
+            `محصول: ${o.product} × ${o.qty}\nمبلغ: ${o.amount || '—'}\n` +
+            `آدرس: ${o.address || '—'}\nتوضیحات: ${o.notes || '—'}\nوضعیت: ${STATUS[o.status].label}`
+          );
+        });
+      });
+    }
+
+    document.getElementById('orderSearch').addEventListener('input', e => {
+      renderOrders(e.target.value);
+    });
+
+    function renderCustomers(filter = '') {
+      const listEl = document.getElementById('customersList');
+      const empty = document.getElementById('customersEmpty');
+      const q = filter.trim().toLowerCase();
+      const keys = Object.keys(customers).filter(k => {
+        if (!q) return true;
+        const c = customers[k];
+        return [c.name, c.ig, c.phone].join(' ').toLowerCase().includes(q);
+      });
+
+      if (!keys.length) {
+        listEl.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+      }
+      empty.style.display = 'none';
+      listEl.innerHTML = keys.map(k => {
+        const c = customers[k];
+        return `
+          <div class="customer-card">
+            <strong>${escapeHtml(c.name || 'بدون نام')}</strong>
+            ${c.ig ? `<span class="badge">@${escapeHtml(c.ig)}</span>` : ''}
+            <div class="muted" style="margin-top:4px">
+              ${c.phone ? 'تماس: ' + escapeHtml(c.phone) + ' · ' : ''}
+              تعداد سفارش: ${c.orders?.length || 0}
+              ${c.lastProduct ? ' · آخرین: ' + escapeHtml(c.lastProduct) : ''}
+            </div>
+            ${c.address ? `<div class="muted" style="margin-top:2px">آدرس: ${escapeHtml(c.address)}</div>` : ''}
+            <div class="muted">اولین سفارش: ${c.firstSeen || '—'} · آخرین: ${c.lastOrder || '—'}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    document.getElementById('customerSearch').addEventListener('input', e => {
+      renderCustomers(e.target.value);
+    });
+
+    document.getElementById('btnExport').addEventListener('click', () => {
+      const data = { orders, customers, exportedAt: new Date().toISOString() };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'miz-sefaresh-export.json';
+      a.click();
+      toast('فایل خروجی دانلود شد');
+    });
+
+    document.getElementById('btnReset').addEventListener('click', () => {
+      if (confirm('همه سفارش‌ها و مشتریان پاک شوند؟ این کار برگشت‌ناپذیر است.')) {
+        orders = [];
+        customers = {};
+        save('mz_orders', orders);
+        save('mz_customers', customers);
+        renderOrders();
+        renderCustomers();
+        toast('همه داده‌ها پاک شد');
+      }
+    });
+
+    function escapeHtml(s) {
+      if (!s) return '';
+      return String(s).replace(/[&<>"']/g, m => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      })[m]);
+    }
+
+    // initial
+    renderOrders();
+    renderCustomers();
+  </script>
+</body>
+</html>
